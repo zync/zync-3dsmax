@@ -32,7 +32,7 @@ except:
   from PySide2.QtWidgets import QMessageBox
   from PySide2.QtWidgets import QWidget
 
-__version__ = '0.1.7'
+__version__ = '0.1.9'
 SUBMIT_DIALOG_FILE_NAME = 'submit_dialog.ui'
 SPINNER_DIALOG_FILE_NAME = 'spinner_dialog.ui'
 SPINNER_GIF_FILE_NAME = 'spinner.gif'
@@ -72,7 +72,7 @@ def show_exceptions(func):
       return func(*args, **kwargs)
     except Exception as e:
       traceback.print_exc()
-      show_message(e.message)
+      show_error(e.message)
 
   return wrapped
 
@@ -106,10 +106,12 @@ def import_zync_python():
   import file_select_dialog
 
 
-def show_message(message):
-  message_box = QMessageBox()
-  message_box.setText(message)
-  message_box.exec_()
+def show_info(message):
+  QMessageBox.information(None, "", message)
+
+
+def show_error(message):
+  QMessageBox.critical(None, "Error", message)
 
 
 # TODO(maciek): add tooltips (b/38194603)
@@ -235,7 +237,7 @@ class SubmitWindowController(object):
 
   def _init_instance_types(self):
     SubmitWindowController.submit_dialog.instance_type.clear()
-    for instance_label in self._zync_conn.get_machine_type_labels(self._renderer):
+    for instance_label in self._zync_conn.get_machine_type_labels(self._get_max_renderer()):
       SubmitWindowController.submit_dialog.instance_type.addItem(instance_label)
     SubmitWindowController.submit_dialog.instance_type.setCurrentIndex(-1)
     SubmitWindowController.submit_dialog.instance_type.currentIndexChanged.connect(
@@ -302,9 +304,9 @@ class SubmitWindowController(object):
     if not self._instance_type_label:
       estimated_cost = 'unknown'
     else:
-      machine_type = self._zync_conn.machine_type_from_label(
-        self._instance_type_label, self._renderer)
       renderer = "%s-3dsmax" % self._renderer
+      machine_type = self._zync_conn.machine_type_from_label(self._instance_type_label,
+                                                             self._get_max_renderer())
       machine_type_price = self._zync_conn.get_machine_type_price(machine_type, renderer)
       if machine_type_price:
         estimated_cost = "$ %.2f" % (machine_type_price * self._num_instances)
@@ -361,6 +363,7 @@ class SubmitWindowController(object):
 
   def _on_upload_only(self):
     self._upload_only = SubmitWindowController.submit_dialog.upload_only.isChecked()
+    SubmitWindowController.submit_dialog.instance_type.setEnabled(not self._upload_only)
     SubmitWindowController.submit_dialog.num_instances.setEnabled(not self._upload_only)
     SubmitWindowController.submit_dialog.instance_type.setEnabled(not self._upload_only)
     SubmitWindowController.submit_dialog.est_cost.setEnabled(not self._upload_only)
@@ -387,10 +390,12 @@ class SubmitWindowController(object):
     self._check_data()
 
     scene_file = MaxPlus.FileManager.GetFileNameAndPath()
+    if not scene_file:
+      raise BadParamException("Scene file name unknown")
     params = self._create_render_params()
     self._zync_conn.submit_job("3dsmax", scene_file, params=params)
 
-    show_message("Job successfully submitted to Zync")
+    show_info("Job successfully submitted to Zync")
 
   def _on_logout(self):
     SubmitWindowController.submit_dialog.close()
@@ -409,7 +414,7 @@ class SubmitWindowController(object):
       if e:
         raise e
       else:
-        show_message("Logged out")
+        show_info("Logged out")
 
     self._logout_thread = AsyncThread(lambda: func_logout())
     self._logout_thread.signal_succeeded.connect(lambda: on_logout_done(None))
@@ -455,8 +460,8 @@ class SubmitWindowController(object):
     params = dict()
 
     params['proj_name'] = self._project
-    params['instance_type'] = self._zync_conn.machine_type_from_label(
-        self._instance_type_label, self._renderer)
+    params['instance_type'] = self._zync_conn.machine_type_from_label(self._instance_type_label,
+                                                                      self._get_max_renderer())
     params['num_instances'] = self._num_instances
     params['distributed'] = 0
     params['frange'] = self._frange
@@ -494,6 +499,9 @@ class SubmitWindowController(object):
       cameras.append(node.Name)
     for child_node in node.Children:
       self._get_cameras(child_node, cameras)
+
+  def _get_max_renderer(self):
+    return "%s-3dsmax" % self._renderer
 
   @staticmethod
   def _get_self_dir():
