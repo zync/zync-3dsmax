@@ -32,7 +32,7 @@ except:
   from PySide2.QtWidgets import QMessageBox
   from PySide2.QtWidgets import QWidget
 
-__version__ = '0.1.9'
+__version__ = '0.1.10'
 SUBMIT_DIALOG_FILE_NAME = 'submit_dialog.ui'
 SPINNER_DIALOG_FILE_NAME = 'spinner_dialog.ui'
 SPINNER_GIF_FILE_NAME = 'spinner.gif'
@@ -167,7 +167,7 @@ class SubmitWindowController(object):
     SubmitWindowController.spinner_dialog.show()
 
     def func_init():
-      self._zync_conn = zync.Zync()
+      self._zync_conn = zync.Zync(application='3dsmax')
 
     self._init_thread = AsyncThread(lambda: func_init())
     self._init_thread.signal_succeeded.connect(lambda: self._on_init_done(None))
