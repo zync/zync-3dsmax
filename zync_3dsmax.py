@@ -32,7 +32,7 @@ except:
   from PySide2.QtWidgets import QMessageBox
   from PySide2.QtWidgets import QWidget
 
-__version__ = '0.1.10'
+__version__ = '0.1.11'
 SUBMIT_DIALOG_FILE_NAME = 'submit_dialog.ui'
 SPINNER_DIALOG_FILE_NAME = 'spinner_dialog.ui'
 SPINNER_GIF_FILE_NAME = 'spinner.gif'
@@ -134,7 +134,8 @@ class SubmitWindowController(object):
     num_xrefs = MaxPlus.Core.EvalMAXScript('pathConfig.xrefPaths.count()').Get()
     self._xrefs = []
     for i in range(num_xrefs):
-      self._xrefs.append(MaxPlus.Core.EvalMAXScript('pathConfig.xrefPaths.get %d' % (i + 1)).Get())
+      xref = MaxPlus.Core.EvalMAXScript('pathConfig.xrefPaths.get %d' % (i + 1)).Get()
+      self._xrefs.append(xref.replace('\\', '/'))
     self._num_instances = 1
     self._instance_type_label = ""
     self._priority = 50
@@ -389,7 +390,7 @@ class SubmitWindowController(object):
     self._update_data()
     self._check_data()
 
-    scene_file = MaxPlus.FileManager.GetFileNameAndPath()
+    scene_file = MaxPlus.FileManager.GetFileNameAndPath().replace('\\', '/')
     if not scene_file:
       raise BadParamException("Scene file name unknown")
     params = self._create_render_params()
@@ -474,7 +475,7 @@ class SubmitWindowController(object):
     params['chunk_size'] = self._chunk_size
     params['scene_info'] = self._create_scene_info()
     params['plugin_version'] = __version__
-    params['output_name'] = self._output_name
+    params['output_name'] = self._output_name.replace('\\', '/')
     params['upload_only'] = int(self._upload_only)
     params['notify_complete'] = self._notify_complete
     params['sync_extra_assets'] = self._sync_extra_assets
