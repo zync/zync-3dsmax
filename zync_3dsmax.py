@@ -32,7 +32,7 @@ except:
   from PySide2.QtWidgets import QMessageBox
   from PySide2.QtWidgets import QWidget
 
-__version__ = '0.1.11'
+__version__ = '0.1.12'
 SUBMIT_DIALOG_FILE_NAME = 'submit_dialog.ui'
 SPINNER_DIALOG_FILE_NAME = 'spinner_dialog.ui'
 SPINNER_GIF_FILE_NAME = 'spinner.gif'
@@ -491,6 +491,8 @@ class SubmitWindowController(object):
       references.append(file_name)
     scene_info['references'] = references
     scene_info['xrefs'] = self._xrefs
+    scene_info['project_path'] = MaxPlus.Core.EvalMAXScript(
+        'pathConfig.getCurrentProjectFolder()').Get()
 
     return scene_info
 
