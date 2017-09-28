@@ -32,7 +32,7 @@ except:
   from PySide2.QtWidgets import QMessageBox
   from PySide2.QtWidgets import QWidget
 
-__version__ = '0.1.12'
+__version__ = '0.1.13'
 SUBMIT_DIALOG_FILE_NAME = 'submit_dialog.ui'
 SPINNER_DIALOG_FILE_NAME = 'spinner_dialog.ui'
 SPINNER_GIF_FILE_NAME = 'spinner.gif'
@@ -84,6 +84,7 @@ def show_exceptions(func):
 def import_zync_python():
   """Imports zync-python"""
   global zync
+  global file_select_dialog
   if zync:
     return
 
@@ -486,9 +487,10 @@ class SubmitWindowController(object):
     scene_info = {}
 
     references = []
-    for asset in list(MaxPlus.AssetManager.GetAssets()) + self._extra_assets:
+    for asset in list(MaxPlus.AssetManager.GetAssets()):
       file_name = asset.GetResolvedFileName().replace('\\', '/')
       references.append(file_name)
+    references += [asset.replace('\\', '/') for asset in self._extra_assets]
     scene_info['references'] = references
     scene_info['xrefs'] = self._xrefs
     scene_info['project_path'] = MaxPlus.Core.EvalMAXScript(
