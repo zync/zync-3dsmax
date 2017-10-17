@@ -32,10 +32,16 @@ except:
   from PySide2.QtWidgets import QMessageBox
   from PySide2.QtWidgets import QWidget
 
-__version__ = '0.1.13'
+__version__ = '0.1.14'
 SUBMIT_DIALOG_FILE_NAME = 'submit_dialog.ui'
 SPINNER_DIALOG_FILE_NAME = 'spinner_dialog.ui'
 SPINNER_GIF_FILE_NAME = 'spinner.gif'
+
+VRAY_RT_ENGINE_RT_CPU = 0
+VRAY_RT_ENGINE_RT_OPENCL = 1
+VRAY_RT_ENGINE_RT_CUDA = 2
+VRAY_ENGINE_TYPE_UNKNOWN = 'unknown'
+VRAY_RT_ENGINE_NAMES = ['cpu', 'opencl', 'cuda']
 
 zync = None
 
@@ -124,10 +130,13 @@ class SubmitWindowController(object):
     import_zync_python()
 
     renderer_name = MaxPlus.RenderSettings.GetProduction().GetClassName()
+    self._vray_rt_engine = None
     if 'arnold' in renderer_name.lower():
       self._renderer = 'arnold'
     elif 'v-ray' in renderer_name.lower():
       self._renderer = 'vray'
+      if 'RT' in renderer_name:
+        self._vray_rt_engine = MaxPlus.Core.EvalMAXScript('renderers.current.engine_type').Get()
     elif renderer_name.lower() == 'scanline renderer':
       self._renderer = 'scanline'
     else:
@@ -238,6 +247,7 @@ class SubmitWindowController(object):
         lambda: self._on_change_num_instances())
 
   def _init_instance_types(self):
+    self._refresh_instance_types_cache()
     SubmitWindowController.submit_dialog.instance_type.clear()
     for instance_label in self._zync_conn.get_machine_type_labels(self._get_max_renderer()):
       SubmitWindowController.submit_dialog.instance_type.addItem(instance_label)
@@ -316,12 +326,15 @@ class SubmitWindowController(object):
         estimated_cost = 'unknown'
     text = 'Est. Cost per Hour: %s' % estimated_cost
     SubmitWindowController.submit_dialog.est_cost.setText(text)
-    renderers = {
-      'arnold': 'Arnold',
-      'vray': 'V-Ray',
-      'scanline': 'Scanline Renderer',
-    }
-    SubmitWindowController.submit_dialog.renderer.setText(renderers[self._renderer])
+    if self._renderer == 'arnold':
+      renderer_name = 'Arnold'
+    elif self._renderer == 'vray':
+      renderer_name = 'V-Ray'
+      if self._vray_rt_engine is not None:
+        renderer_name += ' RT (%s)' % ['CPU', 'OpenCL', 'CUDA'][self._vray_rt_engine]
+    elif self._renderer == 'scanline':
+      renderer_name = 'Scanline Renderer'
+    SubmitWindowController.submit_dialog.renderer.setText(renderer_name)
 
   def _init_logged_as(self):
     SubmitWindowController.submit_dialog.logged_as.setText(
@@ -457,6 +470,11 @@ class SubmitWindowController(object):
       raise BadParamException("Please specify project name")
     if self._sync_extra_assets and not self._extra_assets:
       raise BadParamException('No extra assets selected')
+    if self._vray_rt_engine == VRAY_RT_ENGINE_RT_OPENCL:
+      raise Exception("Only CUDA GPU rendering engine is supported")
+    if self._vray_rt_engine == VRAY_RT_ENGINE_RT_CUDA:
+      if not self._zync_conn.is_experiment_enabled('EXPERIMENT_GPU_3DSMAX'):
+        raise Exception("GPU rendering is not enabled for your site. Please contact support.")
 
   def _create_render_params(self):
     params = dict()
@@ -495,6 +513,8 @@ class SubmitWindowController(object):
     scene_info['xrefs'] = self._xrefs
     scene_info['project_path'] = MaxPlus.Core.EvalMAXScript(
         'pathConfig.getCurrentProjectFolder()').Get()
+    scene_info['vray_production_engine_name'] = VRAY_ENGINE_TYPE_UNKNOWN \
+        if not self._vray_rt_engine else VRAY_RT_ENGINE_NAMES[self._vray_rt_engine]
 
     return scene_info
 
@@ -507,6 +527,11 @@ class SubmitWindowController(object):
 
   def _get_max_renderer(self):
     return "%s-3dsmax" % self._renderer
+
+  def _refresh_instance_types_cache(self):
+    usage_tag = '3dsmax_vray_rt_gpu' if (self._renderer == 'vray' and
+        self._vray_rt_engine == VRAY_RT_ENGINE_RT_CUDA) else None
+    self._zync_conn.refresh_instance_types_cache(renderer=self._renderer, usage_tag=usage_tag)
 
   @staticmethod
   def _get_self_dir():
