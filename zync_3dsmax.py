@@ -32,7 +32,7 @@ except:
   from PySide2.QtWidgets import QMessageBox
   from PySide2.QtWidgets import QWidget
 
-__version__ = '0.1.14'
+__version__ = '0.1.15'
 SUBMIT_DIALOG_FILE_NAME = 'submit_dialog.ui'
 SPINNER_DIALOG_FILE_NAME = 'spinner_dialog.ui'
 SPINNER_GIF_FILE_NAME = 'spinner.gif'
