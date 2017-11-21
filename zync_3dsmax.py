@@ -32,7 +32,7 @@ except:
   from PySide2.QtWidgets import QMessageBox
   from PySide2.QtWidgets import QWidget
 
-__version__ = '0.1.15'
+__version__ = '0.1.16'
 SUBMIT_DIALOG_FILE_NAME = 'submit_dialog.ui'
 SPINNER_DIALOG_FILE_NAME = 'spinner_dialog.ui'
 SPINNER_GIF_FILE_NAME = 'spinner.gif'
@@ -472,9 +472,6 @@ class SubmitWindowController(object):
       raise BadParamException('No extra assets selected')
     if self._vray_rt_engine == VRAY_RT_ENGINE_RT_OPENCL:
       raise Exception("Only CUDA GPU rendering engine is supported")
-    if self._vray_rt_engine == VRAY_RT_ENGINE_RT_CUDA:
-      if not self._zync_conn.is_experiment_enabled('EXPERIMENT_GPU_3DSMAX'):
-        raise Exception("GPU rendering is not enabled for your site. Please contact support.")
 
   def _create_render_params(self):
     params = dict()
