@@ -32,7 +32,7 @@ except:
   from PySide2.QtWidgets import QMessageBox
   from PySide2.QtWidgets import QWidget
 
-__version__ = '0.1.16'
+__version__ = '0.1.17'
 SUBMIT_DIALOG_FILE_NAME = 'submit_dialog.ui'
 SPINNER_DIALOG_FILE_NAME = 'spinner_dialog.ui'
 SPINNER_GIF_FILE_NAME = 'spinner.gif'
@@ -402,7 +402,8 @@ class SubmitWindowController(object):
   @show_exceptions
   def _on_submit_job(self):
     self._update_data()
-    self._check_data()
+    if not self._check_data():
+      return
 
     scene_file = MaxPlus.FileManager.GetFileNameAndPath().replace('\\', '/')
     if not scene_file:
@@ -472,6 +473,13 @@ class SubmitWindowController(object):
       raise BadParamException('No extra assets selected')
     if self._vray_rt_engine == VRAY_RT_ENGINE_RT_OPENCL:
       raise Exception("Only CUDA GPU rendering engine is supported")
+    if self._renderer == 'vray' and MaxPlus.Core.EvalMAXScript('renderers.current.output_on').Get():
+      answer = QMessageBox.question(None, 'V-Ray Frame Buffer',
+          'V-Ray Frame Buffer is enabled and it is not supported by Zync.\nDo you want to continue?',
+          QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+      if answer == QMessageBox.StandardButton.No:
+        return False
+    return True
 
   def _create_render_params(self):
     params = dict()
