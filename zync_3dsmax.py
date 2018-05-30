@@ -32,7 +32,7 @@ except:
   from PySide2.QtWidgets import QMessageBox
   from PySide2.QtWidgets import QWidget
 
-__version__ = '0.1.19'
+__version__ = '0.1.20'
 SUBMIT_DIALOG_FILE_NAME = 'submit_dialog.ui'
 SPINNER_DIALOG_FILE_NAME = 'spinner_dialog.ui'
 SPINNER_GIF_FILE_NAME = 'spinner.gif'
@@ -512,6 +512,8 @@ class SubmitWindowController(object):
         'pathConfig.getCurrentProjectFolder()').Get()
     scene_info['vray_production_engine_name'] = VRAY_ENGINE_TYPE_UNKNOWN \
         if not self._vray_rt_engine else VRAY_RT_ENGINE_NAMES[self._vray_rt_engine]
+    scene_info['max_version'] = MaxPlus.Core.EvalMAXScript(
+        'getFileVersion("$max/3dsmax.exe")').Get().split()[0]
 
     return scene_info
 
