@@ -32,7 +32,7 @@ except:
   from PySide2.QtWidgets import QMessageBox
   from PySide2.QtWidgets import QWidget
 
-__version__ = '0.1.21'
+__version__ = '0.2.0'
 SUBMIT_DIALOG_FILE_NAME = 'submit_dialog.ui'
 SPINNER_DIALOG_FILE_NAME = 'spinner_dialog.ui'
 SPINNER_GIF_FILE_NAME = 'spinner.gif'
@@ -408,6 +408,10 @@ class SubmitWindowController(object):
     if not scene_file:
       raise BadParamException("Scene file name unknown")
     params = self._create_render_params()
+
+    if not self._maybe_show_pvm_warning(params):
+      return
+
     self._zync_conn.submit_job("3dsmax", scene_file, params=params)
 
     show_info("Job successfully submitted to Zync")
@@ -472,6 +476,18 @@ class SubmitWindowController(object):
       raise BadParamException('No extra assets selected')
     if self._vray_rt_engine == VRAY_RT_ENGINE_RT_OPENCL:
       raise Exception("Only CUDA GPU rendering engine is supported")
+
+  def _maybe_show_pvm_warning(self, params):
+    if not 'PREEMPTIBLE' in params['instance_type']:
+      return True
+
+    import pvm_consent_dialog
+    from settings import Settings
+
+    consent_dialog = pvm_consent_dialog.PvmConsentDialog()
+
+    return Settings.get().get_pvm_ack() or consent_dialog.prompt()
+
 
   def _create_render_params(self):
     params = dict()
