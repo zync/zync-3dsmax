@@ -7,6 +7,9 @@ def create_test_model_with_dummy_renderer():
 
   class BaseModelWithDummyRenderer(BaseModel):
 
+    def __init__(self):
+      super(BaseModelWithDummyRenderer, self).__init__(standalone=False)
+
     @property
     def renderer_type(self):
       return 'test_renderer'
@@ -44,7 +47,7 @@ class TestBaseModel(unittest.TestCase):
   def test_should_duplicate_assets(self):
     # given
     assets = ['x']
-    model = BaseModel()
+    model = BaseModel(standalone=False)
 
     # when
     model.assets = assets
@@ -56,7 +59,7 @@ class TestBaseModel(unittest.TestCase):
   def test_should_duplicate_extra_assets(self):
     # given
     extra_assets = ['x']
-    model = BaseModel()
+    model = BaseModel(standalone=False)
 
     # when
     model.extra_assets = extra_assets
@@ -67,7 +70,7 @@ class TestBaseModel(unittest.TestCase):
 
   def test_should_return_correct_full_frame_range(self):
     # given
-    model = BaseModel()
+    model = BaseModel(standalone=False)
     model.frame_range = '1-10'
     model.frame_step = 3
 
@@ -79,7 +82,7 @@ class TestBaseModel(unittest.TestCase):
 
   def test_should_return_false_if_instance_not_preemptible(self):
     # given
-    model = BaseModel()
+    model = BaseModel(standalone=False)
     model.instance_type = 'zync-instance'
 
     # then
@@ -87,7 +90,7 @@ class TestBaseModel(unittest.TestCase):
 
   def test_should_return_true_if_instance_is_preemptible(self):
     # given
-    model = BaseModel()
+    model = BaseModel(standalone=False)
     model.instance_type = 'zync-instance-PREEMPTIBLE'
 
     # then
@@ -95,21 +98,21 @@ class TestBaseModel(unittest.TestCase):
 
   def test_should_return_correct_job_type(self):
     # given
-    model = BaseModel()
+    model = BaseModel(standalone=False)
 
     # then
     self.assertEqual('3dsmax', model.job_type)
 
   def test_should_raise_exception_on_renderer_type(self):
     # given
-    model = BaseModel()
+    model = BaseModel(standalone=False)
 
     # then
     self.assertRaises(AttributeError, lambda: model.renderer_type)
 
   def test_should_return_resolution_as_tuple(self):
     # given
-    model = BaseModel()
+    model = BaseModel(standalone=False)
     model.x_resolution = 640
     model.y_resolution = 480
 
@@ -121,7 +124,7 @@ class TestBaseModel(unittest.TestCase):
 
   def test_should_return_correct_usage_tag(self):
     # given
-    model = BaseModel()
+    model = BaseModel(standalone=False)
 
     # then
     self.assertEqual('3dsmax', model.usage_tag)
@@ -129,7 +132,7 @@ class TestBaseModel(unittest.TestCase):
   def test_should_duplicate_xrefs(self):
     # given
     xrefs = ['x']
-    model = BaseModel()
+    model = BaseModel(standalone=False)
 
     # when
     model.xrefs = xrefs

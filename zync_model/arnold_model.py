@@ -13,7 +13,7 @@ class ArnoldModel(BaseModel):
     """Checks if ArnoldModel can be used for a given renderer."""
     return 'arnold' in actual_renderer_name.lower()
 
-  def __init__(self, version, scene_path_generator):
+  def __init__(self, version, scene_path_generator, standalone):
     """Class constructor.
 
     Args:
@@ -21,7 +21,7 @@ class ArnoldModel(BaseModel):
       scene_path_generator: function producing actual path were exported scene
         files are saved.
     """
-    super(ArnoldModel, self).__init__()
+    super(ArnoldModel, self).__init__(standalone)
     if version is None:
       raise ValueError('Undefined Arnold version')
     self.renderer_version = version
@@ -32,7 +32,7 @@ class ArnoldModel(BaseModel):
   @property
   def job_type(self):
     """Gets the job type."""
-    if self.use_standalone:
+    if self.is_standalone:
       return '3dsmax_arnold'
     return super(ArnoldModel, self).job_type
 
@@ -70,9 +70,16 @@ class ArnoldModel(BaseModel):
 
     Should be used after call to update_scene_file_path.
     """
-    if self.use_standalone and not self.upload_only:
+    if self.is_standalone and not self.upload_only:
       return self._standalone_scene_file_prefix + '*.ass'
     return self.original_scene_file
+
+  @property
+  def instance_renderer_type(self):
+    """Gets the renderer type used by Zync API to retrieve instance types."""
+    if self.is_standalone:
+      return 'standalone-arnold'
+    return 'arnold'
 
   @property
   def standalone_scene_file(self):

@@ -21,7 +21,7 @@ from zync_qt import QtGuiUtils
 from zync_qt import create_movie_widget
 from zync_facade import ZyncApiFacade
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 
 SUBMIT_DIALOG_FILE_NAME = 'submit_dialog.ui'
 SPINNER_DIALOG_FILE_NAME = 'spinner_dialog.ui'
@@ -65,20 +65,28 @@ def _get_module_directory():
   return os.path.dirname(filename)
 
 
-def _create_model(max_api, generate_file_path):
+def _create_model(max_api, generate_file_path, is_v2):
   actual_renderer_name = max_api.renderer_name
 
   if ArnoldModel.is_compatible_with_renderer(actual_renderer_name):
-    return ArnoldModel(max_api.maxtoa_version, generate_file_path)
+    return ArnoldModel(
+        max_api.maxtoa_version, generate_file_path, standalone=is_v2)
 
   if ScanlineModel.is_compatible_with_renderer(actual_renderer_name):
+    if is_v2:
+      raise ValueError('Scanline renderer is not supported')
     return ScanlineModel()
 
   if VrayModel.is_compatible_with_renderer(actual_renderer_name):
     rt_engine_type = None
-    if max_api.is_renderer_vray_rt_engine:
+    # GPU for 3ds Max V-Ray is not yet supported in V2
+    if max_api.is_renderer_vray_rt_engine and not is_v2:
       rt_engine_type = max_api.vray_rt_engine
-    return VrayModel(max_api.vray_version, rt_engine_type, generate_file_path)
+    return VrayModel(
+        max_api.vray_version,
+        rt_engine_type,
+        generate_file_path,
+        standalone=is_v2)
 
   raise ValueError('Unknown renderer: %s' % actual_renderer_name)
 
@@ -143,7 +151,8 @@ def main():
       zync_api = zync.Zync(application='3dsmax')
       zync_adapter = ZyncApiFacade(zync_api, file_select_dialog, settings,
                                    consent_dialog)
-      model = _create_model(max_api, zync_adapter.generate_file_path)
+      model = _create_model(max_api, zync_adapter.generate_file_path,
+                            zync_adapter.is_v2())
       return zync_adapter, model
 
     def on_success((zync_api, model)):

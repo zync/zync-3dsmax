@@ -2,6 +2,7 @@ import sys
 from unittest import TestCase
 
 from zync_model.scanline_model import ScanlineModel
+from zync_model.vray_model import VrayModel
 from zync_presenter import Presenter
 
 
@@ -304,7 +305,8 @@ class TestPresenter(TestCase):
 
     class TestPresenter(Presenter):
 
-      def __init__(self, version, default_project_name, max_api, zync_api, model):
+      def __init__(self, version, default_project_name, max_api, zync_api,
+                   model):
         submit_dialog = DialogMock()
         spinner_dialog = DialogMock()
         super(TestPresenter, self).__init__(
@@ -360,10 +362,8 @@ class TestPresenter(TestCase):
     self.assertEqual(10, presenter._chunk_size_field.value)
     self.assertEqual('1-100', presenter._frame_range_field.text)
     self.assertEqual(1, presenter._frame_step_field.value)
-    self.assertEqual('C:/Output/output.exr',
-                     presenter._output_name_field.text)
-    self.assertEqual('Scanline Renderer',
-                     presenter._renderer_name_label.text)
+    self.assertEqual('C:/Output/output.exr', presenter._output_name_field.text)
+    self.assertEqual('Scanline Renderer', presenter._renderer_name_label.text)
     self.assertFalse(presenter._select_files_button.enabled)
     self.assertEqual(1920, presenter._x_resolution_field.value)
     self.assertEqual(1080, presenter._y_resolution_field.value)
@@ -447,18 +447,10 @@ class TestPresenter(TestCase):
     self.assertEqual('Est. Cost per Hour: 10',
                      presenter._estimated_cost_label.text)
 
-  def test_should_disable_and_uncheck_use_standalone_if_not_supported_by_api(
+  def test_should_disable_and_uncheck_use_standalone_if_standalone_not_supported(
       self):
     # given
-    class _ZyncApiMock(ZyncApiMock):
-
-      def is_renderer_available_as_standalone(self, renderer_name):
-        return False
-
-      def is_renderer_available_as_non_standalone(self, renderer_name):
-        return True
-
-    presenter = self._create_presenter(zync_api=_ZyncApiMock())
+    presenter = self._create_presenter()
 
     # when
     presenter.start()
@@ -467,37 +459,11 @@ class TestPresenter(TestCase):
     self.assertFalse(presenter._use_standalone_checkbox.enabled)
     self.assertFalse(presenter._use_standalone_checkbox.checked)
 
-  def test_should_enable_use_standalone_if_supported_by_api(self):
-    # given
-    class _ZyncApiMock(ZyncApiMock):
-
-      def is_renderer_available_as_standalone(self, renderer_name):
-        return True
-
-      def is_renderer_available_as_non_standalone(self, renderer_name):
-        return True
-
-    presenter = self._create_presenter(zync_api=_ZyncApiMock())
-
-    # when
-    presenter.start()
-
-    # then
-    self.assertTrue(presenter._use_standalone_checkbox.enabled)
-    self.assertFalse(presenter._use_standalone_checkbox.checked)
-
-  def test_should_disable_and_check_use_standalone_if_non_standalone_not_supported_by_api(
+  def test_should_disable_and_check_use_standalone_if_standalone_supported(
       self):
     # given
-    class _ZyncApiMock(ZyncApiMock):
-
-      def is_renderer_available_as_standalone(self, renderer_name):
-        return True
-
-      def is_renderer_available_as_non_standalone(self, renderer_name):
-        return False
-
-    presenter = self._create_presenter(zync_api=_ZyncApiMock())
+    presenter = self._create_presenter(
+        model=VrayModel('3.60.04', None, None, True))
 
     # when
     presenter.start()
@@ -519,8 +485,8 @@ class TestPresenter(TestCase):
     self.assertFalse(presenter._new_project_name_field.enabled)
     self.assertTrue(presenter._existing_project_checkbox.checked)
     self.assertTrue(presenter._existing_project_names_combo.enabled)
-    self.assertEqual(
-        'Project1', presenter._existing_project_names_combo.selected_element)
+    self.assertEqual('Project1',
+                     presenter._existing_project_names_combo.selected_element)
 
   def test_should_disable_existing_projects_fields_when_new_project_name_checked(
       self):

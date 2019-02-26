@@ -75,16 +75,6 @@ class ZyncApiFacade(object):
       instance_type_labels.append(instanceTypeLabel)
     return instance_type_labels
 
-  def is_renderer_available_as_standalone(self, renderer_name):
-    """Checks if API supports standalone rendering for a given renderer."""
-    if self.is_v2():
-      return renderer_name in ZyncApiFacade.SUPPORTED_STANDALONE_RENDERERS_V2
-    return False
-
-  def is_renderer_available_as_non_standalone(self, renderer_name):
-    """Checks if API supports non-standalone rendering for a given renderer."""
-    return not self.is_v2()
-
   def is_v2(self):
     """Checks if API is V2."""
     is_v2 = 'ZYNC_BACKEND_VERSION' in self._zync.CONFIG and self._zync.CONFIG[

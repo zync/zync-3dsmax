@@ -15,16 +15,8 @@ def create_standalone_vray_model(version='3.60.04', rt_engine_type=None):
   class VrayStandalone(VrayModel):
 
     def __init__(self):
-      super(VrayStandalone, self).__init__(version, rt_engine_type,
-                                           generate_scene_path)
-
-    @property
-    def use_standalone(self):
-      return True
-
-    @use_standalone.setter
-    def use_standalone(self, _):
-      pass
+      super(VrayStandalone, self).__init__(
+          version, rt_engine_type, generate_scene_path, standalone=True)
 
   return create_test_model(VrayStandalone)
 
@@ -34,16 +26,8 @@ def create_non_standalone_vray_model(version='3.60.04', rt_engine_type=None):
   class VrayNonStandalone(VrayModel):
 
     def __init__(self):
-      super(VrayNonStandalone, self).__init__(version, rt_engine_type,
-                                              generate_scene_path)
-
-    @property
-    def use_standalone(self):
-      return False
-
-    @use_standalone.setter
-    def use_standalone(self, _):
-      pass
+      super(VrayNonStandalone, self).__init__(
+          version, rt_engine_type, generate_scene_path, standalone=False)
 
   return create_test_model(VrayNonStandalone)
 
@@ -69,11 +53,11 @@ class TestVrayModel(unittest.TestCase):
     self.assertFalse(VrayModel.is_compatible_with_renderer(scanline_renderer))
 
   def test_should_raise_value_error_when_no_version_specified(self):
-    self.assertRaises(ValueError, VrayModel, None, None, None)
+    self.assertRaises(ValueError, VrayModel, None, None, None, False)
 
   def test_should_raise_value_error_when_rt_engine_is_opencl(self):
     self.assertRaises(ValueError, VrayModel, '3.60.04', VrayRtEngineType.OPENCL,
-                      None)
+                      None, False)
 
   def test_should_return_correct_job_type_for_standalone(self):
     # given
@@ -142,7 +126,7 @@ class TestVrayModel(unittest.TestCase):
         rt_engine_type=VrayRtEngineType.CPU)
 
     # then
-    self.assertEqual('3dsmax_vray_rt_gpu', cuda_model.usage_tag)
+    self.assertEqual('3dsmax_standalone_vray_rt_gpu', cuda_model.usage_tag)
     self.assertEqual('3dsmax', no_rt_model.usage_tag)
     self.assertEqual('3dsmax', cpu_model.usage_tag)
 

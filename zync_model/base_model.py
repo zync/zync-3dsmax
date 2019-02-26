@@ -56,8 +56,9 @@ class FrameRange(object):
 class BaseModel(object):
   """3ds Max-specific data model."""
 
-  def __init__(self):
+  def __init__(self, standalone):
     """Class constructor."""
+    self._is_standalone = standalone
     self._assets = None
     self.camera_name = None
     self.chunk_size = None
@@ -77,7 +78,6 @@ class BaseModel(object):
     self.project_path = None
     self.sync_extra_assets = None
     self.upload_only = None
-    self.use_standalone = None
     self._xrefs = None
     self.x_resolution = None
     self.y_resolution = None
@@ -117,10 +117,15 @@ class BaseModel(object):
     return 'PREEMPTIBLE' in self.instance_type
 
   @property
+  def is_standalone(self):
+    return self._is_standalone
+
+  @property
   def job_type(self):
     """Gets the job type.
 
-    Used for submission to Zync API."""
+    Used for submission to Zync API.
+    """
     return '3dsmax'
 
   @property
@@ -152,7 +157,8 @@ class BaseModel(object):
   def scene_file(self):
     """Gets the scene file.
 
-    This path is meant to be used for submission to Zync API."""
+    This path is meant to be used for submission to Zync API.
+    """
     return self.original_scene_file
 
   @property
@@ -168,6 +174,11 @@ class BaseModel(object):
   @xrefs.setter
   def xrefs(self, xrefs):
     self._xrefs = list(xrefs)
+
+  @property
+  def instance_renderer_type(self):
+    """Gets the renderer type used by Zync API to retrieve instance types."""
+    raise AttributeError('Unknown renderer type')
 
   def get_submission_params(self):
     """Gets a dictionary of params for submission to Zync API."""
@@ -238,5 +249,6 @@ class BaseModel(object):
     """Updates the scene and stand-alone scene file paths.
 
     The update is necessary to refresh scene file names, because they may depend
-    on other fields of the model."""
+    on other fields of the model.
+    """
     pass

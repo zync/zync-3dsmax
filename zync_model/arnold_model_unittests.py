@@ -25,18 +25,18 @@ class TestArnoldModel(unittest.TestCase):
     self.assertFalse(ArnoldModel.is_compatible_with_renderer(vray_renderer))
 
   def test_should_raise_value_error_when_no_version_specified(self):
-    self.assertRaises(ValueError, ArnoldModel, None, None)
+    self.assertRaises(ValueError, ArnoldModel, None, None, False)
 
-  def test_should_return_correct_job_type_when_non_standalone(self):
+  def test_should_return_correct_job_type_when_v1(self):
     # given
-    model = ArnoldModel('1.2.3', None)
+    model = ArnoldModel('1.2.3', None, False)
 
     # then
     self.assertEqual('3dsmax', model.job_type)
 
-  def test_should_return_correct_job_type_when_standalone(self):
+  def test_should_return_correct_job_type_when_v2(self):
     # given
-    model = ArnoldModel('1.2.3', None)
+    model = ArnoldModel('1.2.3', None, True)
 
     # when
     model.use_standalone = True
@@ -46,21 +46,21 @@ class TestArnoldModel(unittest.TestCase):
 
   def test_should_return_pretty_renderer_name(self):
     # given
-    model = ArnoldModel('1.2.3', None)
+    model = ArnoldModel('1.2.3', None, False)
 
     # then
     self.assertEqual('Arnold', model.pretty_renderer_name)
 
   def test_should_return_correct_renderer_type(self):
     # given
-    model = ArnoldModel('1.2.3', None)
+    model = ArnoldModel('1.2.3', None, True)
 
     # then
     self.assertEqual(RendererType.ARNOLD, model.renderer_type)
 
   def test_should_correctly_augment_scene_info(self):
     # given
-    model = ArnoldModel('1.2.3', None)
+    model = ArnoldModel('1.2.3', None, True)
     model.assets = []
     model.extra_assets = []
     model.project_path = 'project_path'
@@ -72,9 +72,10 @@ class TestArnoldModel(unittest.TestCase):
     # then
     self.assertEqual('1.2.3', scene_info['maxtoa_version'])
 
-  def test_should_correctly_update_scene_files_when_non_standalone(self):
+  def test_should_correctly_update_scene_files_when_v1(self):
     # given
-    model = ArnoldModel('1.2.3', lambda name: name.replace('.', '_generated.'))
+    model = ArnoldModel('1.2.3', lambda name: name.replace('.', '_generated.'),
+                        False)
     model.original_scene_file = 'scene_file.max'
 
     # when
@@ -83,9 +84,9 @@ class TestArnoldModel(unittest.TestCase):
     # then
     self.assertEqual('scene_file.max', model.scene_file)
 
-  def test_should_correctly_update_scene_files_when_standalone(self):
+  def test_should_correctly_update_scene_files_when_v2(self):
     # given
-    model = ArnoldModel('1.2.3', lambda name: name + '_generated')
+    model = ArnoldModel('1.2.3', lambda name: name + '_generated', True)
     model.original_scene_file = 'scene_file.max'
 
     # when

@@ -45,7 +45,7 @@ class VrayModel(BaseModel):
     """Checks if VrayModel can be used for a given renderer."""
     return 'v-ray' in actual_renderer_name.lower()
 
-  def __init__(self, version, rt_engine_type, scene_path_generator):
+  def __init__(self, version, rt_engine_type, scene_path_generator, standalone):
     """Class constructor.
 
     Args:
@@ -54,7 +54,7 @@ class VrayModel(BaseModel):
       scene_path_generator: function producing actual path were exported scene
         files are saved.
     """
-    super(VrayModel, self).__init__()
+    super(VrayModel, self).__init__(standalone)
     if version is None:
       raise ValueError('Undefined V-Ray version')
     if rt_engine_type == VrayRtEngineType.OPENCL:
@@ -68,7 +68,7 @@ class VrayModel(BaseModel):
   @property
   def job_type(self):
     """Gets the job type."""
-    if self.use_standalone:
+    if self.is_standalone:
       return '3dsmax_vray'
     return super(VrayModel, self).job_type
 
@@ -99,7 +99,7 @@ class VrayModel(BaseModel):
   def usage_tag(self):
     """Gets the usage tag."""
     if self._rt_engine_type == VrayRtEngineType.CUDA:
-      return '3dsmax_vray_rt_gpu'
+      return '3dsmax_standalone_vray_rt_gpu'
     return super(VrayModel, self).usage_tag
 
   @property
@@ -117,8 +117,9 @@ class VrayModel(BaseModel):
     """Gets the standalone scene file path.
 
     This path is meant to be used for submission to Zync.
-    Should be used after call to update_scene_file_path."""
-    if self.use_standalone and not self.upload_only:
+    Should be used after call to update_scene_file_path.
+    """
+    if self.is_standalone and not self.upload_only:
       return self._standalone_scene_file
     return self.original_scene_file
 
@@ -127,14 +128,23 @@ class VrayModel(BaseModel):
     """Gets the standalone scene file path.
 
     This path is meant to be used by V-Ray exporter.
-    Should be used after call to update_scene_file_path."""
+    Should be used after call to update_scene_file_path.
+    """
     return self._standalone_scene_file
+
+  @property
+  def instance_renderer_type(self):
+    """Gets the renderer type used by Zync API to retrieve instance types."""
+    if self.is_standalone:
+      return 'standalone-vray'
+    return 'vray'
 
   def update_scene_file_path(self):
     """Updates the scene and stand-alone scene file paths.
 
     The update is necessary to refresh scene file names, because they depend
-    on other fields of the model."""
+    on other fields of the model.
+    """
     filename, _ = os.path.splitext(self._original_scene_file)
     filename += '_' + str(self.full_frame_range)
     filename += '_' + str(self.camera_name)

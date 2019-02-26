@@ -80,7 +80,6 @@ class Presenter(object):
   @_show_exceptions
   def start(self):
     """Starts the presenter."""
-    # TODO: must disallow unsaved scenes
     if self._max_api.is_save_pending:
       raise RuntimeError('Scene needs to be saved before submitting')
     self._initialize_model()
@@ -123,7 +122,8 @@ class Presenter(object):
   def _initialize_gui(self):
     self._estimated_cost_label = self._submit_dialog.get_label('estimated_cost')
 
-    self._existing_project_checkbox = self._submit_dialog.get_checkbox('existing_project')
+    self._existing_project_checkbox = self._submit_dialog.get_checkbox(
+        'existing_project')
     self._existing_project_checkbox.set_on_checked(
         self._on_existing_project_names_checked)
 
@@ -140,7 +140,8 @@ class Presenter(object):
     self._submit_button = self._submit_dialog.get_button('submit')
     self._submit_button.set_on_clicked(self._on_submit_clicked)
 
-    self._sync_extra_assets_checkbox = self._submit_dialog.get_checkbox('sync_extra_assets')
+    self._sync_extra_assets_checkbox = self._submit_dialog.get_checkbox(
+        'sync_extra_assets')
     self._sync_extra_assets_checkbox.set_on_checked(
         self._on_sync_extra_assets_checked)
 
@@ -150,14 +151,16 @@ class Presenter(object):
     self._camera_names_combo = self._submit_dialog.get_combobox('camera_names')
     self._camera_names_combo.populate(self._max_api.camera_names)
 
-    self._chunk_size_field = self._submit_dialog.get_numerical_field('chunk_size')
+    self._chunk_size_field = self._submit_dialog.get_numerical_field(
+        'chunk_size')
     self._chunk_size_field.set_validation(1, sys.maxint)
     self._chunk_size_field.value = self._model.chunk_size
 
     self._frame_range_field = self._submit_dialog.get_text_field('frame_range')
     self._frame_range_field.text = self._model.frame_range
 
-    self._frame_step_field = self._submit_dialog.get_numerical_field('frame_step')
+    self._frame_step_field = self._submit_dialog.get_numerical_field(
+        'frame_step')
     self._frame_step_field.set_validation(1, sys.maxint)
     self._frame_step_field.value = self._model.frame_step
 
@@ -171,54 +174,49 @@ class Presenter(object):
     self._renderer_name_label = self._submit_dialog.get_label('renderer_name')
     self._renderer_name_label.text = self._model.pretty_renderer_name
 
-    self._x_resolution_field = self._submit_dialog.get_numerical_field('x_resolution')
+    self._x_resolution_field = self._submit_dialog.get_numerical_field(
+        'x_resolution')
     self._x_resolution_field.set_validation(1, sys.maxint)
     self._x_resolution_field.value = self._model.x_resolution
 
-    self._y_resolution_field = self._submit_dialog.get_numerical_field('y_resolution')
+    self._y_resolution_field = self._submit_dialog.get_numerical_field(
+        'y_resolution')
     self._y_resolution_field.set_validation(1, sys.maxint)
     self._y_resolution_field.value = self._model.y_resolution
 
     self._logged_as_label = self._submit_dialog.get_label('logged_as')
     self._logged_as_label.text = self._provide_logged_as_label()
 
-    self._notify_complete_checkbox = self._submit_dialog.get_checkbox('notify_complete')
+    self._notify_complete_checkbox = self._submit_dialog.get_checkbox(
+        'notify_complete')
 
-    self._use_standalone_checkbox = self._submit_dialog.get_checkbox('use_standalone')
-    self._use_standalone_checkbox.set_on_checked(self._on_use_standalone_checked)
-    standalone_available = self._zync_api.is_renderer_available_as_standalone(
-        self._model.renderer_type)
-    non_standalone_available = self._zync_api.is_renderer_available_as_non_standalone(
-        self._model.renderer_type)
-    if standalone_available:
-      if non_standalone_available:
-        self._use_standalone_checkbox.enabled = True
-        self._use_standalone_checkbox.checked = False
-      else:
-        self._use_standalone_checkbox.enabled = False
-        self._use_standalone_checkbox.checked = True
-    elif non_standalone_available:
-      self._use_standalone_checkbox.enabled = False
-      self._use_standalone_checkbox.checked = False
-    else:
-      raise ValueError(
-          'Renderer %s is not supported' % self._model.renderer_type)
-    self._on_use_standalone_checked(self._use_standalone_checkbox.checked)
+    self._use_standalone_checkbox = self._submit_dialog.get_checkbox(
+        'use_standalone')
+    self._use_standalone_checkbox.enabled = False
+    self._use_standalone_checkbox.checked = self._model.is_standalone
+    if self._model.is_standalone:
+      if self._model.renderer_type == RendererType.ARNOLD:
+        self._chunk_size_field.enabled = False
+        self._chunk_size_field.value = 1
 
-    self._instance_count_field = self._submit_dialog.get_numerical_field('instance_count')
+    self._instance_count_field = self._submit_dialog.get_numerical_field(
+        'instance_count')
     self._instance_count_field.set_on_changed(self._on_instance_count_changed)
     self._instance_count_field.set_validation(1, sys.maxint)
     self._instance_count_field.value = self._model.instance_count
 
-    self._instance_types_combo = self._submit_dialog.get_combobox('instance_types')
+    self._instance_types_combo = self._submit_dialog.get_combobox(
+        'instance_types')
     self._instance_types_combo.set_on_changed(self._on_instance_type_changed)
     self._instance_types_combo.populate(
-      self._zync_api.instance_type_labels(self._model.renderer_type,
-                                          self._model.usage_tag))
+        self._zync_api.instance_type_labels(
+            self._model.instance_renderer_type, self._model.usage_tag))
 
-    self._new_project_name_field = self._submit_dialog.get_text_field('new_project_name')
+    self._new_project_name_field = self._submit_dialog.get_text_field(
+        'new_project_name')
 
-    self._existing_project_names_combo = self._submit_dialog.get_combobox('existing_project_names')
+    self._existing_project_names_combo = self._submit_dialog.get_combobox(
+        'existing_project_names')
     self._existing_project_names_combo.populate(
         self._zync_api.get_existing_project_names())
     if self._existing_project_names_combo.contains_element(self._model.project):
@@ -232,14 +230,6 @@ class Presenter(object):
 
   def _provide_logged_as_label(self):
     return 'Logged in as: %s' % self._zync_api.logged_as()
-
-  def _on_use_standalone_checked(self, checked):
-    # for Arnold stand-alone we always render only one frame per task, so
-    # chunk size field should be disabled and set to 1
-    if self._model.renderer_type == RendererType.ARNOLD:
-      self._chunk_size_field.enabled = not checked
-      if checked:
-        self._chunk_size_field.value = 1
 
   def _on_new_project_name_checked(self, checked):
     self._set_existing_project_enabled(not checked)
@@ -264,7 +254,7 @@ class Presenter(object):
   def _on_instance_type_changed(self, instance_type_label):
     self._model.instance_type_label = instance_type_label
     self._model.instance_type = self._zync_api.instance_type(
-        self._model.instance_type_label, self._model.renderer_type)
+        self._model.instance_type_label, self._model.instance_renderer_type)
     self._estimated_cost_label.text = self._provide_estimated_cost_label()
 
   def _provide_estimated_cost_label(self):
@@ -272,7 +262,7 @@ class Presenter(object):
 
   def _provide_estimated_cost(self):
     return self._zync_api.estimated_cost(self._model.instance_type_label,
-                                         self._model.renderer_type,
+                                         self._model.instance_renderer_type,
                                          self._model.instance_count)
 
   def _on_sync_extra_assets_checked(self, sync_extra_assets):
@@ -305,10 +295,8 @@ class Presenter(object):
   def _on_logout_clicked(self):
     self._submit_dialog.close()
     self._spinner_dialog.show('Logging out...')
-    self._call_async(
-        self._zync_api.logout_async,
-        lambda _: self.on_logout_done(None),
-        self.on_logout_done)
+    self._call_async(self._zync_api.logout, lambda _: self.on_logout_done(None),
+                     self.on_logout_done)
 
   @_show_exceptions
   def on_logout_done(self, e):
@@ -327,14 +315,14 @@ class Presenter(object):
     self._spinner_dialog.show('Submitting to Zync...')
     self._call_async(
         lambda: self._zync_api.submit_job(scene_file, params, self._model.
-                                          job_type),
-        lambda _: self._on_submit_done(None),
-        self._on_submit_done)
+                                          job_type), lambda _: self.
+        _on_submit_done(None), self._on_submit_done)
 
   def _on_submit_done(self, error):
     self._spinner_dialog.close()
     if error is None:
-      self._gui_utils.show_info_message_box('Job successfully submitted to Zync')
+      self._gui_utils.show_info_message_box(
+          'Job successfully submitted to Zync')
 
   def _sync_model(self):
     self._model.project = self._get_project_name()
@@ -351,7 +339,6 @@ class Presenter(object):
     self._model.upload_only = self._upload_only_checkbox.checked
     self._model.notify_complete = self._notify_complete_checkbox.checked
     self._model.chunk_size = self._chunk_size_field.value
-    self._model.use_standalone = self._use_standalone_checkbox.checked
 
     if self._model.sync_extra_assets:
       extra_assets = self._zync_api.get_selected_files(self._model.project)
@@ -364,7 +351,7 @@ class Presenter(object):
     self._model.update_scene_file_path()
 
   def _maybe_export_standalone(self):
-    if self._model.use_standalone and not self._model.upload_only:
+    if self._model.is_standalone and not self._model.upload_only:
       frame_range = self._model.full_frame_range
       if self._model.renderer_type == RendererType.VRAY:
         self._export_vray_scene(self._model.standalone_scene_file,
