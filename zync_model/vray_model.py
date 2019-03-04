@@ -99,7 +99,7 @@ class VrayModel(BaseModel):
   def usage_tag(self):
     """Gets the usage tag."""
     if self._rt_engine_type == VrayRtEngineType.CUDA:
-      return '3dsmax_standalone_vray_rt_gpu'
+      return '3dsmax_vray_rt_gpu'
     return super(VrayModel, self).usage_tag
 
   @property

@@ -126,7 +126,7 @@ class TestVrayModel(unittest.TestCase):
         rt_engine_type=VrayRtEngineType.CPU)
 
     # then
-    self.assertEqual('3dsmax_standalone_vray_rt_gpu', cuda_model.usage_tag)
+    self.assertEqual('3dsmax_vray_rt_gpu', cuda_model.usage_tag)
     self.assertEqual('3dsmax', no_rt_model.usage_tag)
     self.assertEqual('3dsmax', cpu_model.usage_tag)
 

@@ -21,7 +21,7 @@ from zync_qt import QtGuiUtils
 from zync_qt import create_movie_widget
 from zync_facade import ZyncApiFacade
 
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 
 SUBMIT_DIALOG_FILE_NAME = 'submit_dialog.ui'
 SPINNER_DIALOG_FILE_NAME = 'spinner_dialog.ui'
@@ -79,8 +79,7 @@ def _create_model(max_api, generate_file_path, is_v2):
 
   if VrayModel.is_compatible_with_renderer(actual_renderer_name):
     rt_engine_type = None
-    # GPU for 3ds Max V-Ray is not yet supported in V2
-    if max_api.is_renderer_vray_rt_engine and not is_v2:
+    if max_api.is_renderer_vray_rt_engine:
       rt_engine_type = max_api.vray_rt_engine
     return VrayModel(
         max_api.vray_version,
