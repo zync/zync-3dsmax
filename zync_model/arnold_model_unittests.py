@@ -6,6 +6,9 @@ from base_model import RendererType
 
 class TestArnoldModel(unittest.TestCase):
 
+  def setUp(self):
+    self.minimum_version = unicode(ArnoldModel.STANDALONE_MINIMUM_SUPPORTED_MAXTOA_VERSION)
+
   def test_should_be_compatible_with_arnold_renderer(self):
     # given
     renderer_name = 'Arnold 5'
@@ -27,6 +30,12 @@ class TestArnoldModel(unittest.TestCase):
   def test_should_raise_value_error_when_no_version_specified(self):
     self.assertRaises(ValueError, ArnoldModel, None, None, False)
 
+  def test_should_raise_value_error_when_incorrect_version(self):
+    self.assertRaises(ValueError, ArnoldModel, 'x.1.2', None, False)
+
+  def test_should_raise_value_error_when_version_below_minimum(self):
+    self.assertRaises(ValueError, ArnoldModel, '2.3.30', None, True)
+
   def test_should_return_correct_job_type_when_v1(self):
     # given
     model = ArnoldModel('1.2.3', None, False)
@@ -36,7 +45,7 @@ class TestArnoldModel(unittest.TestCase):
 
   def test_should_return_correct_job_type_when_v2(self):
     # given
-    model = ArnoldModel('1.2.3', None, True)
+    model = ArnoldModel(self.minimum_version, None, True)
 
     # when
     model.use_standalone = True
@@ -53,14 +62,14 @@ class TestArnoldModel(unittest.TestCase):
 
   def test_should_return_correct_renderer_type(self):
     # given
-    model = ArnoldModel('1.2.3', None, True)
+    model = ArnoldModel(self.minimum_version, None, True)
 
     # then
     self.assertEqual(RendererType.ARNOLD, model.renderer_type)
 
   def test_should_correctly_augment_scene_info(self):
     # given
-    model = ArnoldModel('1.2.3', None, True)
+    model = ArnoldModel(self.minimum_version, None, True)
     model.assets = []
     model.extra_assets = []
     model.project_path = 'project_path'
@@ -70,7 +79,7 @@ class TestArnoldModel(unittest.TestCase):
     scene_info = model._get_scene_info()
 
     # then
-    self.assertEqual('1.2.3', scene_info['maxtoa_version'])
+    self.assertEqual(self.minimum_version, scene_info['maxtoa_version'])
 
   def test_should_correctly_update_scene_files_when_v1(self):
     # given
@@ -86,7 +95,7 @@ class TestArnoldModel(unittest.TestCase):
 
   def test_should_correctly_update_scene_files_when_v2(self):
     # given
-    model = ArnoldModel('1.2.3', lambda name: name + '_generated', True)
+    model = ArnoldModel(self.minimum_version, lambda name: name + '_generated', True)
     model.original_scene_file = 'scene_file.max'
 
     # when

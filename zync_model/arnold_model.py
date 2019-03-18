@@ -1,30 +1,71 @@
 """Contains Arnold-specific data model for 3ds Max Zync plugin."""
 
+from functools import total_ordering
 import os
 from base_model import BaseModel
 from base_model import RendererType
 
 
+@total_ordering
+class MaxtoaVersion(object):
+
+  @staticmethod
+  def from_string(version):
+    try:
+      components = [int(component) for component in version.split('.')]
+      assert len(components) == 3
+    except (ValueError, AssertionError, AttributeError):
+      raise ValueError('Invalid MaxToA version %s' % version)
+    return MaxtoaVersion(components[0], components[1], components[2])
+
+  def __init__(self, major, minor, patch):
+    self.major = major
+    self.minor = minor
+    self.patch = patch
+
+  def __eq__(self, other):
+    return self.major == other.major and self.minor == other.minor and self.patch == other.patch
+
+  def __lt__(self, other):
+    if self.major != other.major:
+      return self.major < other.major
+    if self.minor != other.minor:
+      return self.minor < other.minor
+    if self.patch != other.patch:
+      return self.patch < other.patch
+    return False
+
+  def __unicode__(self):
+    return "%d.%d.%d" % (self.major, self.minor, self.patch)
+
+  def __str__(self):
+    return unicode(self).encode('utf-8')
+
+
 class ArnoldModel(BaseModel):
   """Arnold-specific data model for 3ds Max Zync plugin."""
+
+  STANDALONE_MINIMUM_SUPPORTED_MAXTOA_VERSION = MaxtoaVersion(3, 0, 32)
 
   @staticmethod
   def is_compatible_with_renderer(actual_renderer_name):
     """Checks if ArnoldModel can be used for a given renderer."""
     return 'arnold' in actual_renderer_name.lower()
 
-  def __init__(self, version, scene_path_generator, standalone):
+  def __init__(self, version_string, scene_path_generator, standalone):
     """Class constructor.
 
     Args:
-      version: MAXtoA version.
+      version_string: MAXtoA version.
       scene_path_generator: function producing actual path were exported scene
         files are saved.
+      standalone: indicates if the stand-alone scene will be used.
     """
     super(ArnoldModel, self).__init__(standalone)
-    if version is None:
-      raise ValueError('Undefined Arnold version')
-    self.renderer_version = version
+    version = MaxtoaVersion.from_string(version_string)
+    if standalone and version < ArnoldModel.STANDALONE_MINIMUM_SUPPORTED_MAXTOA_VERSION:
+      raise ValueError('Unsupported MaxToA version: %s. Minimum version is: %s' % (version_string, ArnoldModel.STANDALONE_MINIMUM_SUPPORTED_MAXTOA_VERSION))
+    self.renderer_version = version_string
     self._scene_path_generator = scene_path_generator
     self._original_scene_file = None
     self._standalone_scene_file_prefix = None
