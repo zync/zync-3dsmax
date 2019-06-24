@@ -349,6 +349,8 @@ class Presenter(object):
       self._model.extra_assets = []
 
     self._model.update_scene_file_path()
+    if self._model.renderer_type == RendererType.ARNOLD:
+      self._model.aovs = self._max_api.arnold_aovs
 
   def _maybe_export_standalone(self):
     if self._model.is_standalone and not self._model.upload_only:
@@ -374,6 +376,7 @@ class Presenter(object):
   def _export_arnold_scene(self, scene_file, resolution, frame_start,
                            frame_end):
     with self._max_api.undo():
+      self._max_api.output_file_name = self._model.output_name.replace('\\', '/')
       self._max_api.resolution = resolution
       self._max_api.set_camera_in_active_viewport(self._model.camera_name)
       self._max_api.export_ass(scene_file, frame_start, frame_end)

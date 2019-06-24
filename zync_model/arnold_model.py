@@ -69,6 +69,7 @@ class ArnoldModel(BaseModel):
     self._scene_path_generator = scene_path_generator
     self._original_scene_file = None
     self._standalone_scene_file_prefix = None
+    self._aovs = []
 
   @property
   def job_type(self):
@@ -96,9 +97,19 @@ class ArnoldModel(BaseModel):
     """Gets the renderer type."""
     return RendererType.ARNOLD
 
+  @property
+  def aovs(self):
+    """Gets or sets the list of aovs."""
+    return self._aovs
+
+  @aovs.setter
+  def aovs(self, aovs):
+    self._aovs = aovs
+
   def _get_scene_info(self):
     scene_info = super(ArnoldModel, self)._get_scene_info()
     scene_info['maxtoa_version'] = self.renderer_version
+    scene_info['aovs'] = self.aovs
     return scene_info
 
   @property

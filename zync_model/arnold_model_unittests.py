@@ -74,12 +74,14 @@ class TestArnoldModel(unittest.TestCase):
     model.extra_assets = []
     model.project_path = 'project_path'
     model.xrefs = []
+    model.aovs = ['albedo', 'opacity']
 
     # when
     scene_info = model._get_scene_info()
 
     # then
     self.assertEqual(self.minimum_version, scene_info['maxtoa_version'])
+    self.assertEqual(['albedo', 'opacity'], scene_info['aovs'])
 
   def test_should_correctly_update_scene_files_when_v1(self):
     # given

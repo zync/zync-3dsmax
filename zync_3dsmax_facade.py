@@ -9,6 +9,15 @@ class MaxApiFacade(object):
   """Adapter to 3ds Max API."""
 
   @property
+  def arnold_aovs(self):
+    try:
+      get_aovs_cmd = 'aovs = #(); for driver in renderers.current.AOV_Manager.Drivers do (if driver.active do (append aovs driver.filenameSuffix)); aovs'
+      return list(MaxPlus.Core.EvalMAXScript(get_aovs_cmd).Get())
+    except RuntimeError:
+      print 'Unable to retrieve AOVs'
+      return []
+    
+  @property
   def assets(self):
     """Gets the assets used in the current scene."""
     assets = []
@@ -173,13 +182,21 @@ class MaxApiFacade(object):
 
   @property
   def output_dir_name(self):
-    """Returns the current render output dir."""
+    """Gets or sets the current render output dir."""
     return MaxPlus.PathManager.GetRenderOutputDir()
+
+  @output_dir_name.setter
+  def output_dir_name(self, output_dir_name):
+    MaxPlus.PathManager.SetRenderOutputDir(output_dir_name)
 
   @property
   def output_file_name(self):
-    """Returns the current render output file name."""
+    """Gets or sets the current render output file name."""
     return MaxPlus.RenderSettings.GetOutputFile()
+
+  @output_file_name.setter
+  def output_file_name(self, output_file_name):
+    MaxPlus.RenderSettings.SetOutputFile(output_file_name)
 
   @property
   def project_path(self):

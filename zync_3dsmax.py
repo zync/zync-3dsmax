@@ -21,7 +21,7 @@ from zync_qt import QtGuiUtils
 from zync_qt import create_movie_widget
 from zync_facade import ZyncApiFacade
 
-__version__ = '0.3.3'
+__version__ = '0.3.4'
 
 SUBMIT_DIALOG_FILE_NAME = 'submit_dialog.ui'
 SPINNER_DIALOG_FILE_NAME = 'spinner_dialog.ui'
