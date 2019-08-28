@@ -129,7 +129,7 @@ class MaxApiFacade(object):
 
   _max_version_regex = re.compile(r'(?P<major>\d+),(?P<minor>\d+),.*')
 
-  _max_file_version_to_user_version = {'19': '2017', '20': '2018', '21': '2019'}
+  _max_file_version_to_user_version = {'19': '2017', '20': '2018', '21': '2019', '22': '2020'}
 
   @property
   def max_version(self):
