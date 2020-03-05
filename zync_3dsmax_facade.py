@@ -112,7 +112,7 @@ class MaxApiFacade(object):
   def is_renderer_vray_rt_engine(self):
     """Checks if renderer is V-Ray and uses RT engine."""
     renderer_name = self.renderer_name.lower()
-    return 'v-ray' in renderer_name and 'rt' in renderer_name
+    return 'v-ray' in renderer_name and ('rt' in renderer_name or 'gpu' in renderer_name)
 
   @property
   def is_save_pending(self):
